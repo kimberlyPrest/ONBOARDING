@@ -1,0 +1,23 @@
+[project]
+name = "upsell_navigator___deploy_ready"
+version = "0.1.0"
+description = "upsell_navigator___deploy_ready using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=0.203.0,<1.0.0"
+]
+
+[project.scripts]
+upsell_navigator___deploy_ready = "upsell_navigator___deploy_ready.main:run"
+run_crew = "upsell_navigator___deploy_ready.main:run"
+train = "upsell_navigator___deploy_ready.main:train"
+replay = "upsell_navigator___deploy_ready.main:replay"
+test = "upsell_navigator___deploy_ready.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"

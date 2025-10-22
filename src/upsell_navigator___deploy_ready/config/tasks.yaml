@@ -1,0 +1,114 @@
+---
+data_ingestion_and_normalization:
+  description: "Processar todos os arquivos de entrada da live ({live_name}):\n\n1.
+    **Parsing de Arquivos**: Ler e processar o CSV de participantes (colunas: Name
+    | Join time | Leave time | Duration | Guest | Recording disclaimer), TXT do chat
+    e arquivo de transcrição\n\n2. **Normalização de Presença**: \n   - Consolidar
+    participantes pelo campo Name (sem e-mail)\n   - Identificar e fundir reconexões
+    com Δ ≤ 3 minutos entre Leave e Join\n   - Somar durações totais por participante
+    consolidado\n   - Documentar participantes com \"pouco tempo\" (< 15 minutos)\n\n3.
+    **Série Temporal**: \n   - Construir curva de presença por minuto usando Join/Leave
+    times\n   - Calcular presença simultânea para cada janela de 1 minuto\n   - Identificar
+    pico de audiência simultânea\n\n4. **Corte do Pitch**: \n   - Analisar a transcrição
+    para detectar fim do pitch Elite usando heurísticas\n   - Buscar termos como:
+    preço, investimento, condições, bônus, garantia, CTAs, fechamento de oferta\n
+    \  - Recortar transcrição do início até o fim do pitch identificado\n   - Documentar
+    critérios e trechos usados para o corte\n\n5. **Log de Qualidade**: Documentar
+    completude dos dados, reconexões encontradas, timestamps inconsistentes e limitações\n\nUsar
+    resultado de vendas informado: {sales_result}"
+  expected_output: |-
+    JSON estruturado contendo:
+    - Tabela consolidada de participantes: [{Name, sessions, total_duration, short_time_flag}]
+    - Série temporal de presença: [{minute, simultaneous_count}]
+    - Pico de audiência: {peak_minute, peak_count}
+    - Transcrição recortada até fim do pitch
+    - Dados de qualidade: {total_participants, consolidations_made, transcript_cut_criteria, data_issues}
+    - Parâmetros utilizados: {reconnection_delta: 3, time_window: 1}
+  agent: data_ingestion_and_normalization_specialist
+chat_engagement_and_sentiment_analysis:
+  description: |-
+    Analisar profundamente o chat da live ({live_name}) usando os dados normalizados da etapa anterior:
+
+    1. **Análise de Engajamento**:
+       - Agregar mensagens por janelas temporais (1 minuto)
+       - Calcular volume de mensagens, picos e distribuição temporal
+       - Fazer matching de mensagens por Name quando possível usando tabela consolidada
+       - Identificar janelas de alta e baixa atividade
+
+    2. **Detecção de "Coro"**:
+       - Identificar mensagens idênticas ou muito similares em janelas curtas (30-60s)
+       - Quantificar frequência de mensagens de aprovação coletiva (ex: "sim", "quero", "show")
+       - Documentar momentos de reação coletiva intensa
+
+    3. **Classificação de Sentimento**:
+       - Categorizar mensagens em: aprovação, desaprovação, neutro
+       - Usar taxonomia: preço, tempo, aplicabilidade, suporte, ROI
+       - Calcular distribuição de sentimentos por janelas temporais
+       - Identificar mudanças de sentimento ao longo da live
+
+    4. **Extração de Objeções e Ganchos**:
+       - Identificar objeções explícitas com exemplos específicos
+       - Detectar ganchos de vendas que geraram engajamento positivo
+       - Correlacionar momentos da transcrição recortada com reações do chat
+       - Extrair citações representativas de cada categoria
+
+    5. **Análise Contextual**: Correlacionar picos de engajamento com trechos específicos da transcrição do pitch
+  expected_output: |-
+    JSON estruturado contendo:
+    - Métricas de engajamento: {total_messages, messages_per_minute, peak_engagement_windows}
+    - Detecção de coro: {chorus_instances: [{messages, frequency, timeframe}]}
+    - Análise de sentimento: {approval_rate, disapproval_rate, neutral_rate, sentiment_by_timeframe}
+    - Taxonomia de tópicos: {price_mentions, time_objections, applicability_questions, support_requests, roi_discussions}
+    - Objeções identificadas: [{objection_type, examples, frequency}]
+    - Ganchos de vendas: [{hook_type, audience_reaction, examples}]
+    - Correlações chat-transcrição: [{transcript_moment, chat_reaction, sentiment_shift}]
+  agent: chat_engagement_and_sentiment_analyst
+  context:
+  - data_ingestion_and_normalization
+performance_analysis_and_report_generation:
+  description: |-
+    Consolidar todas as análises da live ({live_name}) em métricas de performance e gerar relatório DOCX completo:
+
+    1. **Cálculo de Métricas de Performance**:
+       - Pico simultâneo final da série temporal
+       - Retenção do pitch: % de participantes presentes até fim do trecho recortado
+       - Conversão estimada: {sales_result} vs. audiência total e retenção
+       - Identificar momentos de maior evasão além do início do pitch
+
+    2. **Análise de Correlações**:
+       - Correlacionar quedas/picos de presença com tópicos do chat e transcrição
+       - Identificar padrões causais entre engajamento, sentimento e retenção
+       - Detectar sinais do apresentador: pontos fortes, erros, oportunidades
+
+    3. **Validação de Thresholds** (para habilitar recomendações):
+       - Participantes válidos ≥ 100
+       - Cobertura da transcrição do pitch ≥ 80%
+       - Curva de presença com ≥ 15 pontos OU evidência clara de picos/quedas
+
+    4. **Geração do Relatório DOCX** em português brasileiro com seções:
+       - **Sumário Executivo**: vendas, audiência total, pico simultâneo, retenção, conversão
+       - **Qualidade dos Dados**: completude, reconexões, limitações
+       - **Audiência e Retenção**: curva de presença, picos/quedas, % até fim do pitch
+       - **Engajamento do Chat**: volume, "coro", sentimento, tópicos
+       - **Pitch do Elite**: padrões relevantes, momentos fortes/fracos, objeções/ganchos
+       - **Conversão vs. Retenção**: relação vendas/retenção, hipóteses causais
+       - **Recomendações** (se thresholds atendidos): ações de melhoria, testes A/B, ajustes
+       - **Anexos**: metodologia, métricas calculadas, amostras do chat
+
+    5. **Exportar** o documento DOCX como artefato do projeto para download
+  expected_output: |-
+    Relatório completo formatado em texto estruturado "Upsell Navigator - Análise de Performance da {live_name}" em português brasileiro, pronto para conversão para DOCX. O texto deve incluir:
+
+    1. **Cabeçalhos com formatação markdown** (# ## ###)
+    2. **Todas as seções especificadas** com dados estruturados
+    3. **Métricas calculadas e insights comportamentais**
+    4. **Recomendações condicionadas aos thresholds de qualidade**
+    5. **Formatação profissional** com bullet points, tabelas em texto e números formatados
+    6. **Gráficos descritivos textuais** das séries temporais
+    7. **Estrutura pronta para ser convertida em DOCX** pela interface
+
+    O texto deve ser salvo e retornado de forma que possa ser facilmente processado para download como documento Word.
+  agent: performance_analytics_and_report_generator
+  context:
+  - data_ingestion_and_normalization
+  - chat_engagement_and_sentiment_analysis
